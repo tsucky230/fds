@@ -1,0 +1,221 @@
+# Keeps sbom/fds.cdx.json (CycloneDX) in step with the dependencies and the version.
+name: SBOM
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Cargo.lock
+      - Cargo.toml
+      - .github/workflows/sbom.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install cargo-cyclonedx --version 0.5.9 --locked
+      - name: Generate
+        run: |
+          cargo cyclonedx --format json --target all --spec-version 1.5 --override-filename fds.cdx
+          mkdir -p sbom
+          # Add custom internal components with full metadata including purl, cpe, and hashes
+          # Keep external dependencies (.components) and remove serialNumber/timestamp for determinism
+          jq '.metadata.component.components += [
+            {
+              "type": "library",
+              "bom-ref": "fds-ops-0.7.0",
+              "name": "fds-ops",
+              "version": "0.7.0",
+              "author": "Qraft Node Kyoto",
+              "description": "File system operations: check, simple tasks, trash, worker pool, and name resolution",
+              "licenses": [{"expression": "GPL-3.0-only"}],
+              "purl": "pkg:cargo/fds-ops@0.7.0",
+              "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-ops:0.7.0:*:*:*:*:*:*:*",
+              "hashes": [
+                {"alg": "SHA-256", "content": "24d6d554a21746b036122c10f8bfe666eb7cb6dc41987714712717d1b7f1597d"}
+              ],
+              "externalReferences": [
+                {"type": "vcs", "url": "https://github.com/tsucky230/fds/tree/main/src/ops"}
+              ]
+            },
+            {
+              "type": "library",
+              "bom-ref": "fds-viewer-0.7.0",
+              "name": "fds-viewer",
+              "version": "0.7.0",
+              "author": "Qraft Node Kyoto",
+              "description": "File content viewers: text, hex, image, markdown with encoding detection and rendering",
+              "licenses": [{"expression": "GPL-3.0-only"}],
+              "purl": "pkg:cargo/fds-viewer@0.7.0",
+              "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-viewer:0.7.0:*:*:*:*:*:*:*",
+              "hashes": [
+                {"alg": "SHA-256", "content": "5eb6865addf10e69c27cb852672d73c5baa2f5ba463f79faf589958c16d64e4f"}
+              ],
+              "externalReferences": [
+                {"type": "vcs", "url": "https://github.com/tsucky230/fds/tree/main/src/viewer"}
+              ]
+            },
+            {
+              "type": "library",
+              "bom-ref": "fds-ui-0.7.0",
+              "name": "fds-ui",
+              "version": "0.7.0",
+              "author": "Qraft Node Kyoto",
+              "description": "Terminal UI: panes, widgets, archive view, preview, info display, and input handling",
+              "licenses": [{"expression": "GPL-3.0-only"}],
+              "purl": "pkg:cargo/fds-ui@0.7.0",
+              "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-ui:0.7.0:*:*:*:*:*:*:*",
+              "hashes": [
+                {"alg": "SHA-256", "content": "973266868f904026b49bea9d21b4efd359e8330ce91a30408aaa42cf5eccfdbd"}
+              ],
+              "externalReferences": [
+                {"type": "vcs", "url": "https://github.com/tsucky230/fds/tree/main/src"}
+              ]
+            },
+            {
+              "type": "library",
+              "bom-ref": "fds-cli-0.7.0",
+              "name": "fds-cli",
+              "version": "0.7.0",
+              "author": "Qraft Node Kyoto",
+              "description": "Command-line interface: shell command execution, editor integration, and terminal control",
+              "licenses": [{"expression": "GPL-3.0-only"}],
+              "purl": "pkg:cargo/fds-cli@0.7.0",
+              "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-cli:0.7.0:*:*:*:*:*:*:*",
+              "hashes": [
+                {"alg": "SHA-256", "content": "973266868f904026b49bea9d21b4efd359e8330ce91a30408aaa42cf5eccfdbd"}
+              ],
+              "externalReferences": [
+                {"type": "vcs", "url": "https://github.com/tsucky230/fds/tree/main/src"}
+              ]
+            },
+            {
+              "type": "library",
+              "bom-ref": "fds-archive-0.7.0",
+              "name": "fds-archive",
+              "version": "0.7.0",
+              "author": "Qraft Node Kyoto",
+              "description": "Archive handling: pack/unpack tar and zip formats with compression support",
+              "licenses": [{"expression": "GPL-3.0-only"}],
+              "purl": "pkg:cargo/fds-archive@0.7.0",
+              "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-archive:0.7.0:*:*:*:*:*:*:*",
+              "hashes": [
+                {"alg": "SHA-256", "content": "973266868f904026b49bea9d21b4efd359e8330ce91a30408aaa42cf5eccfdbd"}
+              ],
+              "externalReferences": [
+                {"type": "vcs", "url": "https://github.com/tsucky230/fds/tree/main/src"}
+              ]
+            },
+            {
+              "type": "library",
+              "bom-ref": "fds-i18n-0.7.0",
+              "name": "fds-i18n",
+              "version": "0.7.0",
+              "author": "Qraft Node Kyoto",
+              "description": "Internationalization: multi-language support with user overrides",
+              "licenses": [{"expression": "GPL-3.0-only"}],
+              "purl": "pkg:cargo/fds-i18n@0.7.0",
+              "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-i18n:0.7.0:*:*:*:*:*:*:*",
+              "hashes": [
+                {"alg": "SHA-256", "content": "973266868f904026b49bea9d21b4efd359e8330ce91a30408aaa42cf5eccfdbd"}
+              ],
+              "externalReferences": [
+                {"type": "vcs", "url": "https://github.com/tsucky230/fds/tree/main/src"}
+              ]
+            }
+          ] | del(.serialNumber, .metadata.timestamp)' fds.cdx.json > sbom/fds.cdx.json
+          rm fds.cdx.json
+          # Verify external dependencies are present
+          echo "SBOM Generation complete. Checking components..."
+          EXT_COUNT=$(jq '.components | length' sbom/fds.cdx.json)
+          echo "External dependencies in SBOM: $EXT_COUNT"
+      - name: Validate SBOM
+        run: |
+          echo "=== SBOM Validation ==="
+          
+          # Check JSON validity
+          if ! jq empty sbom/fds.cdx.json; then
+            echo "❌ SBOM JSON is invalid"
+            exit 1
+          fi
+          echo "✓ JSON format is valid"
+          
+          # Extract Cargo.toml version
+          CARGO_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          echo "Cargo.toml version: $CARGO_VERSION"
+          
+          # Check SBOM component version
+          SBOM_VERSION=$(jq -r '.metadata.component.version' sbom/fds.cdx.json)
+          if [ "$SBOM_VERSION" != "$CARGO_VERSION" ]; then
+            echo "❌ SBOM version ($SBOM_VERSION) does not match Cargo.toml ($CARGO_VERSION)"
+            exit 1
+          fi
+          echo "✓ SBOM component version matches Cargo.toml"
+          
+          # Check internal components count (should be 6: fds-ops, fds-viewer, fds-ui, fds-cli, fds-archive, fds-i18n)
+          INTERNAL_COUNT=$(jq '[.metadata.component.components[] | select(.bom-ref | startswith("fds-") and endswith("-'$CARGO_VERSION'"))] | length' sbom/fds.cdx.json)
+          if [ "$INTERNAL_COUNT" != "6" ]; then
+            echo "❌ Expected 6 internal components, found $INTERNAL_COUNT"
+            exit 1
+          fi
+          echo "✓ Found 6 internal components"
+          
+          # Validate each internal component
+          for component in fds-ops fds-viewer fds-ui fds-cli fds-archive fds-i18n; do
+            COMP=$(jq ".metadata.component.components[] | select(.name == \"$component\")" sbom/fds.cdx.json)
+            
+            if [ -z "$COMP" ]; then
+              echo "❌ Component $component not found"
+              exit 1
+            fi
+            
+            # Check version
+            COMP_VERSION=$(echo "$COMP" | jq -r '.version')
+            if [ "$COMP_VERSION" != "$CARGO_VERSION" ]; then
+              echo "❌ Component $component version ($COMP_VERSION) does not match Cargo.toml"
+              exit 1
+            fi
+            
+            # Check purl format
+            PURL=$(echo "$COMP" | jq -r '.purl')
+            if [[ ! "$PURL" =~ ^pkg:cargo/$component@[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "❌ Component $component has invalid purl: $PURL"
+              exit 1
+            fi
+            
+            # Check cpe format
+            CPE=$(echo "$COMP" | jq -r '.cpe')
+            if [[ ! "$CPE" =~ ^cpe:2\.3:a:qraft_node_kyoto:$component:[0-9]+\.[0-9]+\.[0-9]+:\*:\*:\*:\*:\*:\*:\*$ ]]; then
+              echo "❌ Component $component has invalid cpe: $CPE"
+              exit 1
+            fi
+            
+            # Check hashes
+            HASHES=$(echo "$COMP" | jq '.hashes | length')
+            if [ "$HASHES" == "0" ]; then
+              echo "❌ Component $component has no hashes"
+              exit 1
+            fi
+            
+            echo "✓ Component $component: valid (purl=$PURL, cpe=$CPE, hashes=$HASHES)"
+          done
+          
+          echo ""
+          echo "=== All validations passed ==="
+      - name: Commit
+        run: |
+          git add sbom/fds.cdx.json
+          if git diff --cached --quiet; then
+            echo "The SBOM is up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update the SBOM"
+          git push

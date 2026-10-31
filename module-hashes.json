@@ -1,0 +1,26 @@
+{
+  "fds-archive": {
+    "fileCount": 57,
+    "sha256": "973266868f904026b49bea9d21b4efd359e8330ce91a30408aaa42cf5eccfdbd"
+  },
+  "fds-viewer": {
+    "fileCount": 11,
+    "sha256": "5eb6865addf10e69c27cb852672d73c5baa2f5ba463f79faf589958c16d64e4f"
+  },
+  "fds-i18n": {
+    "fileCount": 57,
+    "sha256": "973266868f904026b49bea9d21b4efd359e8330ce91a30408aaa42cf5eccfdbd"
+  },
+  "fds-ops": {
+    "fileCount": 8,
+    "sha256": "24d6d554a21746b036122c10f8bfe666eb7cb6dc41987714712717d1b7f1597d"
+  },
+  "fds-cli": {
+    "fileCount": 57,
+    "sha256": "973266868f904026b49bea9d21b4efd359e8330ce91a30408aaa42cf5eccfdbd"
+  },
+  "fds-ui": {
+    "fileCount": 57,
+    "sha256": "973266868f904026b49bea9d21b4efd359e8330ce91a30408aaa42cf5eccfdbd"
+  }
+}

@@ -1,0 +1,21 @@
+.comp/
+.mcp.json
+
+
+# Added by cargo
+
+/target
+
+# Kept only in the development repository
+.claude/
+.codex/
+.continue/
+.gemini/
+.vscode/
+.github/copilot-instructions.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+examples/license_tool.rs
+test-lock.json
+*.bak

@@ -1,0 +1,29 @@
+# Build and test on Windows / macOS / Linux (design prompt §40 Quality Gate).
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --check
+      - run: cargo check --all-targets
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --no-fail-fast
+      - name: No GUI dependencies (P2-17)
+        shell: bash
+        run: |
+          if cargo tree -e normal --prefix none | grep -iE '^(x11|wayland|winit|xcb|gtk|smithay)'; then
+            echo "GUI dependency found"; exit 1
+          fi
