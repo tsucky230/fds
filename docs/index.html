@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FDS - A lightweight, fast TUI file manager focused on keyboard operation.">
+    <title>FDS - Keyboard-First TUI File Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        header nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            font-size: 1.8rem;
+            color: #667eea;
+        }
+        
+        header a {
+            color: #667eea;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        header a:hover {
+            color: #764ba2;
+        }
+        
+        .lang-selector {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 3rem;
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+        
+        .tagline {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .feature {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+        
+        .feature h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+        
+        footer {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            text-align: center;
+            color: #666;
+            margin-top: auto;
+            border-top: 1px solid #ddd;
+        }
+        
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 0.5rem;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 2rem 1.5rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            header nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .lang-selector {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>FDS</h1>
+            <div class="lang-selector">
+                <a href="/fds/">English</a>
+                <a href="/fds/ja/">日本語</a>
+                <a href="https://github.com/tsucky230/fds" target="_blank">GitHub</a>
+            </div>
+        </nav>
+    </header>
+    
+    <main>
+        <div class="container">
+            <h2>⌨️ FDS</h2>
+            <p class="tagline">
+                A lightweight, fast TUI file manager focused on keyboard operation.
+                Recreates the "responsiveness that lets you act before you think" for modern terminals.
+            </p>
+            
+            <div class="features">
+                <div class="feature">
+                    <h3>🎯 Keyboard-First</h3>
+                    <p>All operations via keyboard. Alternative keys for all environments.</p>
+                </div>
+                <div class="feature">
+                    <h3>🚀 Fast & Light</h3>
+                    <p>Minimal resource usage. Instant response on any terminal.</p>
+                </div>
+                <div class="feature">
+                    <h3>🌍 SSH & Headless</h3>
+                    <p>Works on remote servers and terminal-only environments.</p>
+                </div>
+                <div class="feature">
+                    <h3>📦 Archives</h3>
+                    <p>ZIP, tar, tar.gz, tgz browsing and extraction built-in.</p>
+                </div>
+                <div class="feature">
+                    <h3>👁️ Universal Viewer</h3>
+                    <p>Text, Markdown, hex, and images with auto-detected encoding.</p>
+                </div>
+                <div class="feature">
+                    <h3>🔒 Reliable</h3>
+                    <p>Safe file operations with proper error handling.</p>
+                </div>
+            </div>
+            
+            <div class="cta-buttons">
+                <a href="https://github.com/tsucky230/fds#installation" target="_blank" class="btn btn-primary">
+                    📥 Install
+                </a>
+                <a href="https://github.com/tsucky230/fds#usage" target="_blank" class="btn btn-secondary">
+                    📖 Documentation
+                </a>
+                <a href="https://github.com/tsucky230/fds" target="_blank" class="btn btn-secondary">
+                    ⭐ GitHub
+                </a>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>
+            Made with ❤️ by <a href="https://github.com/tsucky230" target="_blank">@tsucky230</a>
+            | <a href="https://github.com/tsucky230/fds/blob/main/LICENSE">GPL-3.0-only License</a>
+            | <a href="https://github.com/sponsors/tsucky230">Support us</a>
+        </p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">
+            © 2026 Qraft Node Kyoto. All rights reserved.
+        </p>
+    </footer>
+</body>
+</html>

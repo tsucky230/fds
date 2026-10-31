@@ -1,0 +1,16 @@
+theme: jekyll-theme-minimal
+
+title: FDS - Lightweight TUI File Manager
+description: A fast, keyboard-driven file manager for terminal environments
+
+github:
+  repository_url: https://github.com/tsucky230/fds
+
+markdown: kramdown
+kramdown:
+  auto_ids: true
+  toc_levels: 2..6
+
+plugins:
+- jekyll-seo-tag
+- jekyll-feed
