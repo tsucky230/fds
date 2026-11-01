@@ -180,29 +180,9 @@ cargo install --git https://github.com/tsucky230/fds --tag v0.8.0 --locked
 
 **Status**: ❌ Not registered
 
-**Registration Process**:
-1. Fork `microsoft/winget-pkgs` repository
-2. Create manifest file: `manifests/q/QraftNodeKyoto/fds/0.8.0.yaml`
-3. Example manifest:
-```yaml
-PackageIdentifier: QraftNodeKyoto.fds
-PackageVersion: 0.8.0
-PackageName: fds
-Publisher: Qraft Node Kyoto
-PackageUrl: https://github.com/tsucky230/fds
-License: GPL-3.0-only
-LicenseUrl: https://github.com/tsucky230/fds/blob/main/LICENSE
-Homepage: https://tsucky230.github.io/fds/
-Installers:
-  - Architecture: x64
-    InstallerUrl: https://github.com/tsucky230/fds/releases/download/v0.8.0/fds-0.8.0-x86_64-pc-windows-msvc.exe
-    InstallerSha256: abc123...
-    InstallerType: portable
-  - Architecture: arm64
-    InstallerUrl: https://github.com/tsucky230/fds/releases/download/v0.8.0/fds-0.8.0-aarch64-pc-windows-msvc.exe
-    InstallerSha256: def456...
-    InstallerType: portable
-```
+**Registration Process**: see [PACKAGE_MANAGER_GUIDE.md](PACKAGE_MANAGER_GUIDE.md).
+The manifests (multi-file, schema 1.12.0) live in [packaging/winget/0.8.0/](packaging/winget/0.8.0/) and go to
+`manifests/q/QraftNodeKyoto/fds/0.8.0/` in a PR to `microsoft/winget-pkgs`.
 
 **User will run**:
 ```bash

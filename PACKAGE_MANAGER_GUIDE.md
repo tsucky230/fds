@@ -12,87 +12,38 @@ This document provides step-by-step instructions for registering fds with Window
 - GitHub account
 - Microsoft/winget-pkgs repository access
 
-### Step 1: Create Manifest File
+### Step 1: Prepare the Manifests
 
-After GitHub Release is created, prepare the winget manifest:
+After the GitHub Release is created, copy the previous version's manifests and update the version, URLs and SHA-256 values (from `fds-X.Y.Z-checksums.sha256`, uppercase).
 
-**File**: `winget/manifests/q/QraftNodeKyoto/fds/0.8.0.yaml`
+**Files** (multi-file format, schema 1.12.0): `packaging/winget/<version>/`
+- `QraftNodeKyoto.fds.yaml` (`ManifestType: version`)
+- `QraftNodeKyoto.fds.locale.en-US.yaml` (`ManifestType: defaultLocale`)
+- `QraftNodeKyoto.fds.installer.yaml` (`ManifestType: installer`, `InstallerType: portable`, `Commands: [fds]`)
 
-```yaml
-PackageIdentifier: QraftNodeKyoto.fds
-PackageVersion: 0.8.0
-PackageName: fds
-Publisher: Qraft Node Kyoto
-PublisherUrl: https://github.com/tsucky230
-PublisherSupportUrl: https://github.com/tsucky230/fds/issues
-Author: Qraft Node Kyoto
-License: GPL-3.0-only
-LicenseUrl: https://github.com/tsucky230/fds/blob/main/LICENSE
-Homepage: https://tsucky230.github.io/fds/
-Description: "Keyboard-First TUI File Manager - Lightweight terminal file browser with preview capabilities"
-Tags:
-  - file-manager
-  - tui
-  - keyboard-driven
-  - terminal
-  - cli
+See [packaging/winget/0.8.0/](packaging/winget/0.8.0/) for the current set.
 
-ReleaseNotes: |
-  [Release notes from GitHub Release]
-
-ReleaseNotesUrl: https://github.com/tsucky230/fds/releases/tag/v0.8.0
-
-Installers:
-  - Architecture: x64
-    InstallerType: portable
-    InstallerUrl: https://github.com/tsucky230/fds/releases/download/v0.8.0/fds-0.8.0-x86_64-pc-windows-msvc.exe
-    InstallerSha256: abc123def456...  # From release checksums
-    InstallerLocale: en-US
-    
-  - Architecture: arm64
-    InstallerType: portable
-    InstallerUrl: https://github.com/tsucky230/fds/releases/download/v0.8.0/fds-0.8.0-aarch64-pc-windows-msvc.exe
-    InstallerSha256: ghi789jkl012...  # From release checksums
-
-ManifestType: singleton
-ManifestVersion: 1.6.0
+Validate and test locally (enabling local manifests needs an administrator shell; disable it again afterwards):
+```powershell
+winget validate --manifest packaging\winget\0.8.0
+winget settings --enable LocalManifestFiles      # admin
+winget install --manifest packaging\winget\0.8.0
+winget uninstall QraftNodeKyoto.fds
+winget settings --disable LocalManifestFiles     # admin
 ```
 
 ### Step 2: Fork & PR to microsoft/winget-pkgs
 
-1. Fork: https://github.com/microsoft/winget-pkgs
-2. Clone your fork:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/winget-pkgs.git
-   cd winget-pkgs
-   ```
-3. Create branch:
-   ```bash
-   git checkout -b fds-0.8.0
-   ```
-4. Add manifest:
-   ```bash
-   mkdir -p manifests/q/QraftNodeKyoto/fds/0.8.0
-   # Place your YAML file in above directory
-   ```
-5. Validate locally:
-   ```bash
-   # Install Windows Package Manager CLI
-   winget source reset --force
-   ```
-6. Commit & Push:
-   ```bash
-   git add manifests/q/QraftNodeKyoto/fds/0.8.0/QraftNodeKyoto.fds.yaml
-   git commit -m "Add fds v0.8.0"
-   git push origin fds-0.8.0
-   ```
-7. Create PR on https://github.com/microsoft/winget-pkgs/pulls
+1. Fork https://github.com/microsoft/winget-pkgs
+2. On a new branch, add the three files under `manifests/q/QraftNodeKyoto/fds/<version>/`
+3. Open a PR titled `New package: QraftNodeKyoto.fds version 0.8.0` (later versions: `Update: QraftNodeKyoto.fds to X.Y.Z`) and fill in the PR template checklist
+4. Sign the Microsoft CLA when the bot asks (first PR only)
 
 ### Step 3: Wait for Approval
 
 - Microsoft validates the manifest
 - Automated tests run (format, URL validity, etc.)
-- Merge within 1-2 weeks typically
+- A moderator reviews and merges
 
 ### Step 4: Users Can Install
 
