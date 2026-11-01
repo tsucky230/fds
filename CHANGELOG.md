@@ -7,6 +7,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-01
+
+This release introduces automated release workflows with multi-platform binary support and version validation.
+
+### Added
+- Automated release workflow (release.yml) with support for 5 platforms: Linux x86_64, macOS Intel/Apple Silicon, Windows x86_64/ARM64
+- Pre-release validation workflow (pre-release-check.yml) ensuring version consistency across Cargo.toml, CHANGELOG files, and SBOM
+- Local validation scripts (bash and PowerShell) for pre-push version verification
+- Automatic GitHub Release creation with binary artifacts and SHA256 checksums
+- SBOM (CycloneDX) inclusion in release artifacts for supply chain transparency
+- Comprehensive release planning documentation and package manager integration guides
+
+### Changed
+- Enhanced CI and SBOM workflows with detailed inline documentation and comments
+- Improved version management with automated checks before release
+
 ## [0.7.0] - 2026-10-31
 
 This release adds the ability to type and execute commands within FDS.
