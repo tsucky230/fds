@@ -1,0 +1,110 @@
+# Pre-Release Version & CHANGELOG Validation
+# Ensures version consistency across Cargo.toml, CHANGELOG files, and SBOM before any push to main.
+# This prevents version mismatches and ensures release readiness.
+#
+# Validation Checks:
+#  1. Extract version from Cargo.toml
+#  2. Verify CHANGELOG.md has entry for current version
+#  3. Verify CHANGELOG_jp.md has entry for current version
+#  4. Verify SBOM version matches Cargo.toml
+#  5. Validate Semantic Versioning format (X.Y.Z)
+#
+# Trigger: Every push to main branch
+name: Pre-Release Validation
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  validate-version:
+    name: Verify Version Consistency
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout the repository
+      - uses: actions/checkout@v4
+
+      # Step 2: Extract version from Cargo.toml (source of truth)
+      # Pattern: version = "X.Y.Z"
+      - name: Extract Version from Cargo.toml
+        id: version
+        run: |
+          VERSION=$(grep '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Cargo.toml version: $VERSION"
+
+      # Step 3: Validate CHANGELOG.md has an entry for this version
+      # Looks for: ## [X.Y.Z] - YYYY-MM-DD
+      - name: Validate CHANGELOG.md Entry
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if grep -q "^## \[$VERSION\]" CHANGELOG.md; then
+            echo "✅ CHANGELOG.md: Found entry for v$VERSION"
+          else
+            echo "❌ CHANGELOG.md: Missing entry for v$VERSION"
+            echo "Expected format: ## [$VERSION] - YYYY-MM-DD"
+            exit 1
+          fi
+
+      # Step 4: Validate CHANGELOG_jp.md has an entry for this version
+      # Japanese changelog must also have the version entry
+      - name: Validate CHANGELOG_jp.md Entry
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if grep -q "^## \[$VERSION\]" CHANGELOG_jp.md; then
+            echo "✅ CHANGELOG_jp.md: Found entry for v$VERSION"
+          else
+            echo "❌ CHANGELOG_jp.md: Missing entry for v$VERSION"
+            echo "Expected format: ## [$VERSION] - YYYY-MM-DD"
+            exit 1
+          fi
+
+      # Step 5: Validate SBOM version matches Cargo.toml version
+      # The SBOM (Software Bill of Materials) must stay in sync with releases
+      - name: Validate SBOM Version Consistency
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SBOM_VERSION=$(jq -r '.metadata.component.version' sbom/fds.cdx.json 2>/dev/null || echo "")
+          
+          if [ -z "$SBOM_VERSION" ]; then
+            echo "⚠️  SBOM not yet generated (will be created on Cargo.toml/lock change)"
+          elif [ "$SBOM_VERSION" = "$VERSION" ]; then
+            echo "✅ SBOM: Version matches Cargo.toml ($SBOM_VERSION)"
+          else
+            echo "❌ SBOM: Version mismatch - Cargo.toml: $VERSION, SBOM: $SBOM_VERSION"
+            exit 1
+          fi
+
+      # Step 6: Validate Semantic Versioning format (X.Y.Z)
+      # Ensures version follows semantic versioning rules
+      # - MAJOR.MINOR.PATCH
+      # - All numeric with dots as separators
+      - name: Validate Semantic Versioning Format
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "✅ Version format valid: $VERSION (X.Y.Z)"
+          else
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected: X.Y.Z (e.g., 0.8.0, 1.0.0)"
+            exit 1
+          fi
+
+      # Step 7: Summary report
+      # Shows the validated version and confirms readiness for release
+      - name: Version Validation Summary
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo ""
+          echo "════════════════════════════════════════"
+          echo "✅ All Pre-Release Checks Passed"
+          echo "════════════════════════════════════════"
+          echo "Version: $VERSION"
+          echo "Status: Ready for tag creation"
+          echo ""
+          echo "Next steps:"
+          echo "  1. (Optional) Test locally: cargo build --release"
+          echo "  2. Create tag: git tag -a v$VERSION -m 'Release $VERSION'"
+          echo "  3. Push tag: git push origin v$VERSION"
+          echo "  4. GitHub Release will be created automatically"
+          echo "════════════════════════════════════════"
