@@ -467,7 +467,7 @@ fn extract_zip(source: &Path, stage: &Path, cancel: &AtomicBool) -> io::Result<(
         let mut entry = zip.by_index(i).map_err(invalid)?;
         let is_dir = entry.is_dir();
         validate_zip_kind(entry.unix_mode(), is_dir)?;
-        let rel = safe_member_path(&entry.name().map_err(invalid)?)?
+        let rel = safe_member_path(&entry.name().map_err(invalid)?)?;
         write_member(&mut entry, &stage.join(rel), is_dir, cancel)?;
     }
     Ok(())

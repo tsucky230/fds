@@ -1,68 +1,69 @@
-# Automated Release Workflow
-# Triggered when a version tag (v*.*.*) is pushed
-# Builds binaries for Windows / macOS / Linux, creates GitHub Release with checksums
-#
-# Workflow Steps:
-#  1. Validate tag format and version
-#  2. Build optimized binaries for 5 platforms (x86_64/arm64 on Linux/macOS/Windows)
-#  3. Generate SHA256 checksums for integrity verification
-#  4. Create GitHub Release with release notes from CHANGELOG
-#  5. Upload all artifacts (binaries + checksums + SBOM)
-#  6. Publish to crates.io (Rust package registry)
-#
-# Trigger: Any tag matching v* (e.g., v0.8.0, v1.0.0)
+# Builds release binaries for 5 targets and publishes a GitHub Release when a v*.*.* tag is pushed.
+# Run it manually (workflow_dispatch) for a dry run: everything except creating the Release.
 name: Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'  # Match semantic versioning tags only (e.g., v0.8.0, v1.0.0)
+      - 'v*.*.*'
+  workflow_dispatch:
 
 permissions:
-  contents: write  # Allow creating releases and uploading assets
+  contents: write
 
 jobs:
-  # Step 1: Validate tag and extract version information
   validate-release:
-    name: Validate Release Tag
+    name: Validate Release
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.tag-version.outputs.version }}
-      is-prerelease: ${{ steps.tag-version.outputs.is-prerelease }}
+      version: ${{ steps.version.outputs.version }}
+      is-prerelease: ${{ steps.version.outputs.is-prerelease }}
     steps:
       - uses: actions/checkout@v4
-      
-      # Extract version from tag (e.g., v0.8.0 -> 0.8.0)
-      - name: Extract Version from Tag
-        id: tag-version
+
+      - name: Resolve version
+        id: version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          TAG="${{ github.ref }}"
-          VERSION="${TAG#refs/tags/v}"  # Remove "refs/tags/v" prefix
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          
-          # Detect if this is a pre-release (has alpha/beta/rc suffix)
-          if [[ "$VERSION" =~ -(alpha|beta|rc) ]]; then
-            echo "is-prerelease=true" >> $GITHUB_OUTPUT
-            echo "📋 Pre-release detected: $VERSION"
+          CARGO_VERSION=$(awk -F'"' '/^\[/{p=($0=="[package]")} p && /^version *=/{print $2; exit}' Cargo.toml)
+          if [ "$REF_TYPE" = "tag" ]; then
+            VERSION="${REF_NAME#v}"
+            if [ "$VERSION" != "$CARGO_VERSION" ]; then
+              echo "::error::Tag $REF_NAME does not match Cargo.toml version $CARGO_VERSION"
+              exit 1
+            fi
           else
-            echo "is-prerelease=false" >> $GITHUB_OUTPUT
-            echo "📦 Stable release: $VERSION"
+            VERSION="$CARGO_VERSION"
+            echo "Dry run for $VERSION: no GitHub Release will be created"
           fi
-      
-      # Verify Cargo.toml version matches tag version
-      - name: Verify Version Match
-        run: |
-          CARGO_VERSION=$(grep '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
-          TAG_VERSION="${{ steps.tag-version.outputs.version }}"
-          
-          if [ "$CARGO_VERSION" = "$TAG_VERSION" ]; then
-            echo "✅ Version match confirmed: $CARGO_VERSION = $TAG_VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "is-prerelease=true" >> "$GITHUB_OUTPUT"
           else
-            echo "❌ Version mismatch: Cargo.toml ($CARGO_VERSION) ≠ Tag ($TAG_VERSION)"
+            echo "is-prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check CHANGELOG and SBOM
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for f in CHANGELOG.md CHANGELOG_jp.md; do
+            awk -v h="## [$VERSION]" 'index($0, h) == 1 { found = 1 } END { exit !found }' "$f" \
+              || { echo "::error::$f has no '## [$VERSION]' entry"; exit 1; }
+          done
+          SBOM_VERSION=$(jq -r '.metadata.component.version' sbom/fds.cdx.json)
+          if [ "$SBOM_VERSION" != "$VERSION" ]; then
+            echo "::error::sbom/fds.cdx.json is $SBOM_VERSION, expected $VERSION. Tag the commit made by the SBOM workflow."
             exit 1
           fi
 
-  # Step 2: Build optimized binaries for all target platforms
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Test
+        run: cargo test --locked --no-fail-fast
+
   build-binaries:
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
@@ -98,200 +99,107 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
-      # Install Rust and target toolchain
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-      
-      # Build optimized release binary (--release enables LTO and optimizations)
+
       - name: Build Release Binary
         run: cargo build --release --locked --target ${{ matrix.target }}
-      
-      # Copy binary to output directory with version-specific name
-      # Pattern: fds-{version}-{target}[.exe]
-      - name: Prepare Artifact
-        shell: bash
-        run: |
-          SRC_DIR="target/${{ matrix.target }}/release"
-          DEST="${{ matrix.artifact_name }}"
-          VERSION="${{ needs.validate-release.outputs.version }}"
-          ARTIFACT_NAME="fds-${VERSION}-${{ matrix.target }}"
-          
-          if [ "${{ matrix.artifact_name }}" = "fds.exe" ]; then
-            ARTIFACT_NAME="${ARTIFACT_NAME}.exe"
-          fi
-          
-          cp "$SRC_DIR/${{ matrix.artifact_name }}" "$ARTIFACT_NAME"
-          ls -lh "$ARTIFACT_NAME"
-          echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITHUB_ENV
-      
-      # Upload binary as workflow artifact (temporary, for checksum generation)
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.target }}-binary
-          path: ${{ env.ARTIFACT_NAME }}
-          retention-days: 1  # Keep only for checksum generation
 
-  # Step 3: Generate SHA256 checksums for all binaries
-  # This allows users to verify binary integrity after download
+      - name: Stage Binary
+        shell: bash
+        env:
+          VERSION: ${{ needs.validate-release.outputs.version }}
+        run: |
+          EXT="${{ matrix.artifact_name }}"
+          EXT="${EXT#fds}"
+          mkdir -p dist
+          cp "target/${{ matrix.target }}/release/${{ matrix.artifact_name }}" "dist/fds-${VERSION}-${{ matrix.target }}${EXT}"
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
   generate-checksums:
     name: Generate Checksums
     runs-on: ubuntu-latest
-    needs: build-binaries
+    needs: [validate-release, build-binaries]
     steps:
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          path: artifacts
-      
-      # Generate checksums in standard format for verification
-      # Format: filename  checksum
+          pattern: bin-*
+          path: dist
+          merge-multiple: true
+
+      # Bare file names so users can run `sha256sum -c` next to the downloads
       - name: Generate SHA256 Checksums
+        working-directory: dist
+        env:
+          VERSION: ${{ needs.validate-release.outputs.version }}
         run: |
-          cd artifacts
-          find . -type f ! -name "*.sha256" | sort | while read file; do
-            sha256sum "$file" >> fds-${{ needs.validate-release.outputs.version }}-checksums.sha256
-          done
-          cat fds-${{ needs.validate-release.outputs.version }}-checksums.sha256
-      
-      # Upload checksums as artifact
-      - name: Upload Checksums
-        uses: actions/upload-artifact@v4
+          sha256sum fds-* > "fds-${VERSION}-checksums.sha256"
+          cat "fds-${VERSION}-checksums.sha256"
+          [ "$(wc -l < "fds-${VERSION}-checksums.sha256")" -eq 5 ]
+
+      - uses: actions/upload-artifact@v4
         with:
           name: checksums
-          path: artifacts/fds-${{ needs.validate-release.outputs.version }}-checksums.sha256
-          retention-days: 1
+          path: dist/*.sha256
+          if-no-files-found: error
+          retention-days: 7
 
-  # Step 4: Create GitHub Release with artifacts and release notes
   create-release:
     name: Create GitHub Release
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    needs: [validate-release, build-binaries, generate-checksums]
+    needs: [validate-release, generate-checksums]
     steps:
       - uses: actions/checkout@v4
-      
-      # Download all artifacts (binaries + checksums)
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
+
+      - uses: actions/download-artifact@v4
         with:
-          path: release-assets
-      
-      # Copy SBOM to release assets
-      - name: Include SBOM in Release
+          path: dist
+          merge-multiple: true
+
+      - name: Prepare Assets and Notes
+        env:
+          VERSION: ${{ needs.validate-release.outputs.version }}
         run: |
-          cp sbom/fds.cdx.json release-assets/sbom-${{ needs.validate-release.outputs.version }}.json
-          echo "✅ SBOM added to release assets"
-      
-      # Extract version and pre-release flag
-      - name: Prepare Release Data
-        id: release-data
-        run: |
-          VERSION="${{ needs.validate-release.outputs.version }}"
-          IS_PRERELEASE="${{ needs.validate-release.outputs.is-prerelease }}"
-          
-          # Extract release notes from CHANGELOG.md for this version
-          # Pattern: ## [VERSION] - DATE ... until next ## [
-          CHANGELOG_ENTRY=$(awk "/^## \[$VERSION\]/,/^## \[/" CHANGELOG.md | head -n -1)
-          
-          # Store multi-line changelog in environment variable
-          {
-            echo "changelog<<EOF"
-            echo "$CHANGELOG_ENTRY"
-            echo "EOF"
-          } >> $GITHUB_ENV
-      
-      # Create the GitHub Release with all artifacts
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+          cp sbom/fds.cdx.json "dist/fds-${VERSION}-sbom.cdx.json"
+          awk -v h="## [$VERSION]" 'index($0, h) == 1 { f = 1; next } f && /^## \[/ { exit } f' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::CHANGELOG.md has no notes for $VERSION"
+            exit 1
+          fi
+          cat >> notes.md <<EOF
+
+          ## Install
+
+          Download the binary for your platform below and verify it:
+
+          \`\`\`bash
+          sha256sum -c --ignore-missing fds-${VERSION}-checksums.sha256
+          \`\`\`
+
+          Or build from source:
+
+          \`\`\`bash
+          cargo install --git https://github.com/tsucky230/fds --tag v${VERSION} --locked
+          \`\`\`
+
+          SBOM (CycloneDX): \`fds-${VERSION}-sbom.cdx.json\` · License: GPL-3.0-only
+          EOF
+          ls -l dist
+
+      - uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ needs.validate-release.outputs.version }}
-          name: Release ${{ needs.validate-release.outputs.version }}
-          body: |
-            # fds ${{ needs.validate-release.outputs.version }}
-
-            ${{ env.changelog }}
-
-            ## Installation
-
-            ### From Binaries
-            Download the binary for your platform from the assets below.
-            Verify integrity using checksums:
-            ```bash
-            sha256sum -c fds-${{ needs.validate-release.outputs.version }}-checksums.sha256
-            ```
-
-            ### From Package Managers
-            - **Rust/Cargo**: `cargo install fds --locked`
-            - **Windows (winget)**: `winget install QraftNodeKyoto.fds`
-            - **macOS (Homebrew)**: `brew install fds` (coming soon)
-
-            ### From Source
-            ```bash
-            git clone https://github.com/tsucky230/fds.git
-            cd fds
-            git checkout v${{ needs.validate-release.outputs.version }}
-            cargo install --path . --locked
-            ```
-
-            ## Supply Chain Security
-
-            - **SBOM** (Software Bill of Materials): See `sbom-${{ needs.validate-release.outputs.version }}.json`
-            - **Checksums**: Verify with `fds-${{ needs.validate-release.outputs.version }}-checksums.sha256`
-            - **License**: GPL-3.0-only
-
-          files: |
-            release-assets/**/fds-*
-            release-assets/**/checksums.sha256
-            release-assets/**/sbom-*.json
-          draft: false
+          name: fds ${{ needs.validate-release.outputs.version }}
+          body_path: notes.md
+          files: dist/*
+          fail_on_unmatched_files: true
           prerelease: ${{ needs.validate-release.outputs.is-prerelease }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  # Step 5: Publish to crates.io (Rust package registry)
-  # This makes `cargo install fds --locked` available to all Rust developers
-  publish-crates:
-    name: Publish to crates.io
-    runs-on: ubuntu-latest
-    needs: validate-release
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: dtolnay/rust-toolchain@stable
-      
-      # Publish to crates.io registry
-      # Note: Requires CARGO_REGISTRY_TOKEN secret to be configured
-      - name: Publish to crates.io
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} --allow-dirty
-        continue-on-error: true  # Don't fail if already published
-
-  # Step 6: Notify completion
-  # Summary of what was done
-  release-summary:
-    name: Release Summary
-    runs-on: ubuntu-latest
-    needs: [validate-release, create-release, publish-crates]
-    if: always()
-    steps:
-      - name: Release Complete
-        run: |
-          echo ""
-          echo "════════════════════════════════════════════════════════════"
-          echo "🎉 Release Workflow Complete"
-          echo "════════════════════════════════════════════════════════════"
-          echo "Version: ${{ needs.validate-release.outputs.version }}"
-          echo "Pre-release: ${{ needs.validate-release.outputs.is-prerelease }}"
-          echo ""
-          echo "✅ Actions Completed:"
-          echo "  • Binaries built for 5 platforms"
-          echo "  • SHA256 checksums generated"
-          echo "  • GitHub Release created with assets"
-          echo "  • Published to crates.io"
-          echo ""
-          echo "📥 Installation:"
-          echo "  cargo install fds --locked"
-          echo ""
-          echo "📖 Release Notes:"
-          echo "  https://github.com/tsucky230/fds/releases/tag/v${{ needs.validate-release.outputs.version }}"
-          echo "════════════════════════════════════════════════════════════"

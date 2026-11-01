@@ -12,8 +12,8 @@ Write-Host ""
 # Step 1: Extract Cargo.toml version
 Write-Host "[1/5] Extracting version from Cargo.toml..." -ForegroundColor Yellow
 $cargoContent = Get-Content Cargo.toml -Raw
-$versionMatch = $cargoContent | Select-String 'version = "([0-9.]+)"' -ErrorAction Stop
-$CARGO_VERSION = $versionMatch.Matches[0].Groups[1].Value
+$versionMatch = [regex]::Match($cargoContent, '(?ms)^\[package\][^\[]*?^version\s*=\s*"([^"]+)"')
+$CARGO_VERSION = $versionMatch.Groups[1].Value
 
 if ([string]::IsNullOrWhiteSpace($CARGO_VERSION)) {
     Write-Host "❌ Failed to extract version from Cargo.toml" -ForegroundColor Red
@@ -58,8 +58,7 @@ if (Test-Path "sbom/fds.cdx.json") {
         } elseif ($SBOM_VERSION -eq $CARGO_VERSION) {
             Write-Host "✅ SBOM version matches: $SBOM_VERSION" -ForegroundColor Green
         } else {
-            Write-Host "❌ SBOM version mismatch: Cargo.toml=$CARGO_VERSION, SBOM=$SBOM_VERSION" -ForegroundColor Red
-            exit 1
+            Write-Host "⚠️  SBOM is $SBOM_VERSION, Cargo.toml is $CARGO_VERSION (the SBOM workflow updates it after push; tag only after that)" -ForegroundColor Yellow
         }
     } catch {
         Write-Host "⚠️  SBOM file exists but is not valid JSON (will regenerate on next push)" -ForegroundColor Yellow

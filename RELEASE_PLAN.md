@@ -48,7 +48,7 @@
 ```bash
 #!/bin/bash
 # .git/hooks/pre-push
-VERSION=$(grep '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+VERSION=$(awk -F'"' '/^\[/{p=($0=="[package]")} p && /^version *=/{print $2; exit}' Cargo.toml)
 if ! grep -q "## \[$VERSION\]" CHANGELOG.md; then
   echo "❌ Version $VERSION not found in CHANGELOG.md"
   exit 1
@@ -70,19 +70,20 @@ jobs:
       - name: Extract Cargo.toml version
         id: version
         run: |
-          VERSION=$(grep '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          VERSION=$(awk -F'"' '/^\[/{p=($0=="[package]")} p && /^version *=/{print $2; exit}' Cargo.toml)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Validate CHANGELOG entries
         run: |
           grep -q "## \[$VERSION\]" CHANGELOG.md || exit 1
           grep -q "## \[$VERSION\]" CHANGELOG_jp.md || exit 1
           echo "✓ Version $VERSION found in both CHANGELOG files"
-      - name: Validate SBOM version
+      - name: Validate SBOM version (warning only; sbom.yml commits the regenerated SBOM after a bump)
         run: |
           SBOM_VERSION=$(jq -r '.metadata.component.version' sbom/fds.cdx.json)
-          [ "$SBOM_VERSION" = "$VERSION" ] || exit 1
-          echo "✓ SBOM version matches: $SBOM_VERSION"
+          [ "$SBOM_VERSION" = "$VERSION" ] || echo "::warning::SBOM is $SBOM_VERSION"
 ```
+
+Only the `[package]` section is read: `[[package.metadata.cyclonedx.components]]` also has `version =` lines.
 
 ---
 
@@ -90,13 +91,14 @@ jobs:
 
 ### 2.1 Release Workflow
 
-**Trigger**: Tag creation (`git tag v0.8.0` → `git push --tags`)
+**Trigger**: Tag creation (`git tag v0.8.0` → `git push origin v0.8.0`).
+Running the workflow manually (`workflow_dispatch`) is a dry run: it validates, tests, builds and checksums, but creates no Release.
 
 **Release Process** (`release.yml`):
 ```
 Tag pushed (e.g., v0.8.0)
         ↓
-[Step 1] Extract version & validate changelog
+[Step 1] Tag = Cargo.toml version, CHANGELOG entries, SBOM version, cargo test
         ↓
 [Step 2] Build binaries for Windows / macOS / Linux
         ↓
@@ -106,11 +108,9 @@ Tag pushed (e.g., v0.8.0)
          - Release notes from CHANGELOG
          - Binary attachments
          - Checksum file
-         - SBOM (sbom/fds.cdx.json)
+         - SBOM (fds-X.Y.Z-sbom.cdx.json)
         ↓
-[Step 5] Publish to crates.io (Rust)
-        ↓
-[Step 6] Trigger winget / homebrew update
+[Step 5] winget / homebrew update (manual, Phase 3)
 ```
 
 ### 2.2 Binary Build Matrix
@@ -147,20 +147,19 @@ strategy:
 
 ### 2.3 Checksum & Integrity
 
-**SHA256 Checksums** (distributed with release):
+**SHA256 Checksums** (`fds-0.8.0-checksums.sha256`, `sha256sum` format):
 ```
-fds-0.8.0-x86_64-unknown-linux-gnu: abc123...
-fds-0.8.0-x86_64-apple-darwin:      def456...
-fds-0.8.0-aarch64-apple-darwin:     ghi789...
-fds-0.8.0-x86_64-pc-windows-msvc:   jkl012...
-fds-0.8.0-aarch64-pc-windows-msvc:  mno345...
-sbom-0.8.0.json:                    pqr678...
+abc123...  fds-0.8.0-aarch64-apple-darwin
+def456...  fds-0.8.0-aarch64-pc-windows-msvc.exe
+ghi789...  fds-0.8.0-x86_64-apple-darwin
+jkl012...  fds-0.8.0-x86_64-pc-windows-msvc.exe
+mno345...  fds-0.8.0-x86_64-unknown-linux-gnu
 ```
 
 **Usage**:
 ```bash
-# Verify after download
-sha256sum -c fds-0.8.0-checksums.sha256
+# Verify after download (only the files you downloaded)
+sha256sum -c --ignore-missing fds-0.8.0-checksums.sha256
 # Output: fds-0.8.0-x86_64-unknown-linux-gnu: OK
 ```
 
@@ -168,18 +167,13 @@ sha256sum -c fds-0.8.0-checksums.sha256
 
 ## 📦 Phase 3: Package Manager Integration (Sprint 2)
 
-### 3.1 Rust Crates Registry (`cargo install fds`)
+### 3.1 Rust / Cargo
 
-**Status**: 🟡 Partial (crate exists but not published)
-
-**Steps**:
-1. Create `Cargo.lock` in repository (already done ✓)
-2. Ensure `license`, `repository`, `homepage` in Cargo.toml (done ✓)
-3. Run: `cargo publish --allow-dirty` (from CI after GitHub Release created)
+**Status**: Not published to crates.io. The crate name `fds` is already taken there by an unrelated project, so `cargo install fds` would install someone else's tool.
 
 **User will run**:
 ```bash
-cargo install fds --locked
+cargo install --git https://github.com/tsucky230/fds --tag v0.8.0 --locked
 ```
 
 ### 3.2 Windows Package Manager (`winget`)
@@ -304,27 +298,30 @@ version = "0.8.0"  # Changed from 0.7.0
 - 互換性を破る変更（ある場合）
 ```
 
-4. **Commit**:
+4. **Commit** (include `Cargo.lock`; release builds use `--locked`):
 ```bash
-git add Cargo.toml CHANGELOG.md CHANGELOG_jp.md
+cargo check --locked   # updates nothing if Cargo.lock is already in sync
+git add Cargo.toml Cargo.lock CHANGELOG.md CHANGELOG_jp.md
 git commit -m "Bump version to 0.8.0"
 git push origin main
 ```
 
-5. **CI runs version validation** ✓ (Phase 1)
+5. **CI runs**: CI (tests), Pre-Release Validation, and SBOM. SBOM commits the regenerated `sbom/fds.cdx.json`.
 
-6. **After tests pass, create release tag**:
+6. **Dry run** after `git pull` (picks up the SBOM commit):
+   Actions → Release → Run workflow. All 5 builds and checksums must pass.
+
+7. **Tag the commit that contains the SBOM update**:
 ```bash
 git tag -a v0.8.0 -m "Release version 0.8.0"
 git push origin v0.8.0
 ```
 
-7. **CI runs release workflow** ✓ (Phase 2)
+8. **CI runs release workflow** ✓ (Phase 2)
    - Builds binaries
    - Creates GitHub Release
-   - Publishes to crates.io
 
-8. **Manual (or automated) package manager updates**:
+9. **Manual (or automated) package manager updates**:
    - winget manifest (can be automated)
    - homebrew formula (community-driven or manual)
 
@@ -339,7 +336,6 @@ git push origin v0.8.0
 | **2** | Build Binaries (release.yml) | Medium | Week 2-3 | CI/CD |
 | **2** | GitHub Release Creation | Small | Week 2-3 | CI/CD |
 | **2** | Checksum Generation | Small | Week 2-3 | CI/CD |
-| **2** | crates.io Publishing | Small | Week 2-3 | CI/CD |
 | **3** | winget Manifest & Registration | Medium | Week 3-4 | Manual |
 | **3** | Homebrew Formula & Registration | Medium | Week 3-4 | Manual |
 | **3** | AUR/Linux Distro Registration | Medium | Sprint 2+ | Manual |
@@ -350,7 +346,7 @@ git push origin v0.8.0
 
 1. **Checksum Verification**: All downloads should verify SHA256
 2. **Code Signing** (Optional): Sign binaries with certificate
-3. **SBOM in Release**: Include `sbom-0.8.0.json` for supply chain transparency
+3. **SBOM in Release**: Include `fds-0.8.0-sbom.cdx.json` for supply chain transparency
 4. **Vulnerability Scan**: Run `grype` before release
 5. **GitHub Release Artifacts**: Ensure all checksums are in release notes
 
@@ -366,12 +362,11 @@ git push origin v0.8.0
 - [ ] Binaries build for 5 targets
 - [ ] GitHub Release created with all artifacts
 - [ ] Checksums generated and verified
-- [ ] crates.io publishes automatically
 
 **Phase 3 Complete** when:
 - [ ] `winget install QraftNodeKyoto.fds` works
 - [ ] `brew install fds` works
-- [ ] `cargo install fds --locked` works
+- [ ] `cargo install --git https://github.com/tsucky230/fds --locked` works
 
 ---
 
@@ -379,7 +374,6 @@ git push origin v0.8.0
 
 - [Semantic Versioning](https://semver.org/)
 - [Keep a Changelog](https://keepachangelog.com/)
-- [Rust crates.io Publishing](https://doc.rust-lang.org/cargo/publishing/)
 - [Windows Package Manager](https://learn.microsoft.com/en-us/windows/package-manager/)
 - [Homebrew Formula Development](https://docs.brew.sh/Formula-Cookbook)
 

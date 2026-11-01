@@ -12,7 +12,7 @@ echo ""
 
 # Step 1: Extract Cargo.toml version
 echo "[1/5] Extracting version from Cargo.toml..."
-CARGO_VERSION=$(grep '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+CARGO_VERSION=$(awk -F'"' '/^\[/{p=($0=="[package]")} p && /^version *=/{print $2; exit}' Cargo.toml)
 if [ -z "$CARGO_VERSION" ]; then
   echo "❌ Failed to extract version from Cargo.toml"
   exit 1
@@ -51,8 +51,7 @@ if [ -f "sbom/fds.cdx.json" ]; then
   elif [ "$SBOM_VERSION" = "$CARGO_VERSION" ]; then
     echo "✅ SBOM version matches: $SBOM_VERSION"
   else
-    echo "❌ SBOM version mismatch: Cargo.toml=$CARGO_VERSION, SBOM=$SBOM_VERSION"
-    exit 1
+    echo "⚠️  SBOM is $SBOM_VERSION, Cargo.toml is $CARGO_VERSION (the SBOM workflow updates it after push; tag only after that)"
   fi
 else
   echo "⚠️  SBOM not yet generated (will be created by workflow)"

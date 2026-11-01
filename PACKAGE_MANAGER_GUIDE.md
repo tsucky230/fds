@@ -273,7 +273,7 @@ package() {
 ### Current (v0.7.0)
 - No Homebrew formula yet (manual build required)
 - No winget registration
-- Only available via `cargo install` or manual download
+- Only available via `cargo install --git https://github.com/tsucky230/fds --locked` or manual download (the crates.io name `fds` belongs to an unrelated project)
 
 ### Planned (v0.8.0+)
 - ✅ Automated release workflow

@@ -1,4 +1,6 @@
 # Build and test on Windows / macOS / Linux (design prompt §40 Quality Gate).
+# This workflow runs on all push events and pull requests to ensure code quality
+# and platform compatibility across Windows, macOS, and Linux.
 name: CI
 
 on:
@@ -7,23 +9,45 @@ on:
 
 jobs:
   check:
+    name: Compile, Lint, and Test on ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      # Checkout the repository code
       - uses: actions/checkout@v4
+      
+      # Install Rust stable toolchain with code formatting and linting tools
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - run: cargo fmt --check
-      - run: cargo check --all-targets
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: cargo test --no-fail-fast
-      - name: No GUI dependencies (P2-17)
+      
+      # Step 1: Code format verification (must match rustfmt standards)
+      - name: Check Code Format
+        run: cargo fmt --check
+      
+      # Step 2: Compile check for all targets (lib, bin, tests, examples, benches)
+      - name: Check Compilation
+        run: cargo check --all-targets
+      
+      # Step 3: Lint with Clippy for code quality warnings (treat warnings as errors)
+      - name: Lint with Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      
+      # Step 4: Run all unit tests and integration tests
+      - name: Run Tests
+        run: cargo test --no-fail-fast
+      
+      # Step 5: Verify no GUI framework dependencies (headless-only requirement per design)
+      # Requirement: fds must not depend on windowing systems (x11, wayland, winit, xcb, gtk, smithay)
+      # to ensure terminal-only operation and lightweight deployment
+      - name: Verify No GUI Dependencies (Headless Requirement)
         shell: bash
         run: |
           if cargo tree -e normal --prefix none | grep -iE '^(x11|wayland|winit|xcb|gtk|smithay)'; then
-            echo "GUI dependency found"; exit 1
+            echo "❌ GUI dependency found - fds must remain headless-only"
+            exit 1
           fi
+          echo "✓ Headless requirement verified"

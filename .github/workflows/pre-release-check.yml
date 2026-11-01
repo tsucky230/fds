@@ -29,7 +29,7 @@ jobs:
       - name: Extract Version from Cargo.toml
         id: version
         run: |
-          VERSION=$(grep '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          VERSION=$(awk -F'"' '/^\[/{p=($0=="[package]")} p && /^version *=/{print $2; exit}' Cargo.toml)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Cargo.toml version: $VERSION"
 
@@ -59,20 +59,16 @@ jobs:
             exit 1
           fi
 
-      # Step 5: Validate SBOM version matches Cargo.toml version
-      # The SBOM (Software Bill of Materials) must stay in sync with releases
+      # Step 5: SBOM version (warning only: sbom.yml commits the regenerated SBOM after a bump;
+      # release.yml refuses to release while it is stale)
       - name: Validate SBOM Version Consistency
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           SBOM_VERSION=$(jq -r '.metadata.component.version' sbom/fds.cdx.json 2>/dev/null || echo "")
-          
-          if [ -z "$SBOM_VERSION" ]; then
-            echo "⚠️  SBOM not yet generated (will be created on Cargo.toml/lock change)"
-          elif [ "$SBOM_VERSION" = "$VERSION" ]; then
+          if [ "$SBOM_VERSION" = "$VERSION" ]; then
             echo "✅ SBOM: Version matches Cargo.toml ($SBOM_VERSION)"
           else
-            echo "❌ SBOM: Version mismatch - Cargo.toml: $VERSION, SBOM: $SBOM_VERSION"
-            exit 1
+            echo "::warning::SBOM is '$SBOM_VERSION', Cargo.toml is $VERSION. Wait for the SBOM workflow commit before tagging."
           fi
 
       # Step 6: Validate Semantic Versioning format (X.Y.Z)
