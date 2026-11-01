@@ -64,11 +64,11 @@ on:
     branches: [main]
 
 jobs:
-  version-check:
+  validate-version:
     runs-on: ubuntu-latest
     steps:
       - name: Extract Cargo.toml version
-        run: echo "VERSION=$(grep '^version' Cargo.toml | cut -d'"' -f2)" >> $GITHUB_ENV
+        run: echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Validate CHANGELOG entries
         run: |
           grep -q "## \[$VERSION\]" CHANGELOG.md || exit 1
@@ -103,7 +103,6 @@ Tag pushed (e.g., v0.8.0)
          - Release notes from CHANGELOG
          - Binary attachments
          - Checksum file
-         - SBOM (sbom/fds.cdx.json)
         ↓
 [Step 5] Publish to crates.io (Rust)
         ↓
@@ -119,27 +118,27 @@ strategy:
       # Linux x86_64
       - os: ubuntu-latest
         target: x86_64-unknown-linux-gnu
-        artifact: fds
+        artifact_name: fds
       
       # macOS (Intel)
       - os: macos-latest
         target: x86_64-apple-darwin
-        artifact: fds
+        artifact_name: fds
       
       # macOS (Apple Silicon)
       - os: macos-latest
         target: aarch64-apple-darwin
-        artifact: fds
+        artifact_name: fds
       
       # Windows x86_64
       - os: windows-latest
         target: x86_64-pc-windows-msvc
-        artifact: fds.exe
+        artifact_name: fds.exe
       
       # Windows ARM64 (Surface devices)
       - os: windows-latest
         target: aarch64-pc-windows-msvc
-        artifact: fds.exe
+        artifact_name: fds.exe
 ```
 
 ### 2.3 Checksum & Integrity
