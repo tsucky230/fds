@@ -54,81 +54,55 @@ winget install QraftNodeKyoto.fds
 
 ---
 
-## 🍎 Homebrew (macOS)
+## � Homebrew (macOS / Linux)
 
-### Prerequisites
-- Homebrew formula knowledge
-- GitHub account
-- macOS development environment
+FDS is distributed through the tap [tsucky230/homebrew-tap](https://github.com/tsucky230/homebrew-tap):
 
-### Step 1: Create Homebrew Formula
+```bash
+brew install tsucky230/tap/fds
+```
 
-**File**: `homebrew-fds/Formula/fds.rb`
+`homebrew/core` is not an option yet: a self-submission needs at least 90 forks, 90 watchers or 225 stars, and a repository younger than 30 days is normally not eligible ([Package Acceptance Policy](https://docs.brew.sh/Package-Acceptance-Policy)).
+
+### The formula
+
+`Formula/fds.rb` in the tap builds the tagged source tarball with Rust:
 
 ```ruby
 class Fds < Formula
-  desc "Keyboard-First TUI File Manager"
+  desc "Lightweight, fast, keyboard-first TUI file manager"
   homepage "https://tsucky230.github.io/fds/"
   url "https://github.com/tsucky230/fds/archive/refs/tags/v0.8.0.tar.gz"
-  sha256 "abc123def456..."  # Get from release assets or:
-                             # curl -sL URL | sha256sum
+  sha256 "8113e091345140a772e3eb3e4a622b536b7bb7fd6c7f9e402df6c40ec8d63d56"
   license "GPL-3.0-only"
-  
+  head "https://github.com/tsucky230/fds.git", branch: "main"
+
   depends_on "rust" => :build
-  
+
   def install
-    system "cargo", "install", "--locked", "--root", prefix, "--path", "."
+    system "cargo", "install", *std_cargo_args
   end
-  
+
   test do
-    assert_match "fds", shell_output("#{bin}/fds --version")
+    assert_match "fds #{version}", shell_output("#{bin}/fds --version")
   end
 end
 ```
 
-### Step 2: Calculate SHA256
+The tap's CI (`.github/workflows/tests.yml`) runs `brew audit --strict --online`, `brew install --build-from-source`, `brew test` and `brew uninstall` on `macos-latest` and `ubuntu-latest`.
 
-```bash
-# Get the tar.gz SHA256
-curl -sL "https://github.com/tsucky230/fds/archive/refs/tags/v0.8.0.tar.gz" | sha256sum
-# Output: abc123def456...
-```
+### Updating for a new release
 
-### Step 3: Test Formula Locally
+After the GitHub Release (and its tag) exists:
 
-```bash
-# Option A: Using homebrew-core (official)
-brew tap homebrew/core
-brew install --HEAD fds
+1. Compute the SHA-256 of `https://github.com/tsucky230/fds/archive/refs/tags/vX.Y.Z.tar.gz` (lowercase)
+2. In the tap, change `url` and `sha256` in `Formula/fds.rb` on a new branch
+3. Open a PR and wait for the tap's CI to pass on macOS and Linux
+4. Merge; users get it with `brew update && brew upgrade fds`
 
-# Option B: Create your own tap
-# Create repository: tsucky230/homebrew-fds
-# Add formula to: Formula/fds.rb
-# Test with:
-brew tap tsucky230/fds
-brew install fds --HEAD
-```
+### Moving to homebrew-core later
 
-### Step 4: Submit to Homebrew Core (Optional)
-
-1. Fork: https://github.com/Homebrew/homebrew-core
-2. Follow: https://docs.brew.sh/Formula-Cookbook
-3. Add formula to `Formula/fds.rb`
-4. Test:
-   ```bash
-   brew install --verbose --build-from-source Formula/fds.rb
-   ```
-5. PR to https://github.com/Homebrew/homebrew-core
-
-### Step 5: Users Can Install
-
-After approval:
-```bash
-brew install fds
-# or with custom tap:
-brew tap tsucky230/fds
-brew install fds
-```
+Once the notability thresholds are met, the same formula can be proposed to [Homebrew/homebrew-core](https://github.com/Homebrew/homebrew-core) following the [Formula Cookbook](https://docs.brew.sh/Formula-Cookbook). Users would then run `brew install fds`.
 
 ---
 
@@ -195,7 +169,7 @@ package() {
 
 ### Week 1-2: Package Manager Registration
 - [ ] **winget**: Create PR to microsoft/winget-pkgs
-- [ ] **Homebrew**: Create tap (tsucky230/homebrew-fds) or submit to homebrew-core
+- [x] **Homebrew**: Tap `tsucky230/homebrew-tap` created with `Formula/fds.rb`
 
 ### Week 2-3: Announce
 - [ ] Post release on GitHub Discussions
@@ -221,19 +195,13 @@ package() {
 
 ## ⚠️ Known Limitations
 
-### Current (v0.7.0)
-- No Homebrew formula yet (manual build required)
-- No winget registration
-- Only available via `cargo install --git https://github.com/tsucky230/fds --locked` or manual download (the crates.io name `fds` belongs to an unrelated project)
-
-### Planned (v0.8.0+)
-- ✅ Automated release workflow
-- ✅ Binary distribution via GitHub Releases
-- 🟡 winget registration (manual, week 1-2)
-- 🟡 Homebrew tap (manual, week 1-2)
+### Current (v0.8.0)
+- Homebrew: tap only (`brew install tsucky230/tap/fds`), built from source; not in homebrew-core
+- winget: submitted ([microsoft/winget-pkgs#468247](https://github.com/microsoft/winget-pkgs/pull/468247)), waiting for review
+- Not on crates.io (the name `fds` belongs to an unrelated project); use `cargo install --git https://github.com/tsucky230/fds --locked` or the GitHub Release binaries
 
 ### Future (v1.0.0+)
-- 🟢 Official Homebrew formula
+- 🟢 Homebrew bottles or homebrew-core formula
 - 🟢 Arch Linux AUR
 - 🟢 Ubuntu/Debian PPA
 - 🟢 Snap store

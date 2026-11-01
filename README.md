@@ -21,6 +21,16 @@ Currently, implementation reaches Phase 4 (Supporter Infrastructure). It suppo
 
 ## Installation
 
+### Homebrew (macOS / Linux)
+
+```bash
+brew install tsucky230/tap/fds
+```
+
+The formula in [tsucky230/homebrew-tap](https://github.com/tsucky230/homebrew-tap) builds FDS from the tagged source, so the first install takes a few minutes.
+
+### From source
+
 Rust (stable) is required. Running the following at the repository root installs to `~/.cargo/bin/fds`.
 
 ```bash

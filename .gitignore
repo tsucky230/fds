@@ -20,3 +20,5 @@ examples/license_tool.rs
 test-lock.json
 *.bak
 QIITA_ARTICLE.md
+WINGET_RELEASE_GUIDE_jp.md
+HOMEBREW_RELEASE_GUIDE_jp.md

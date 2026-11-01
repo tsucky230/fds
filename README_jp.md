@@ -22,6 +22,16 @@ Unicode・SSH・現代のターミナル環境向けに作り直しています�
 
 ## インストール
 
+### Homebrew（macOS / Linux）
+
+```bash
+brew install tsucky230/tap/fds
+```
+
+[tsucky230/homebrew-tap](https://github.com/tsucky230/homebrew-tap) の formula がタグのソースからビルドするので、初回は数分かかります。
+
+### ソースから
+
 Rust（stable）が必要です。リポジトリのルートで次を実行すると、`~/.cargo/bin/fds` にインストールされます。
 
 ```bash

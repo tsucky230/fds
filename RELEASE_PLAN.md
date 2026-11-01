@@ -189,33 +189,15 @@ The manifests (multi-file, schema 1.12.0) live in [packaging/winget/0.8.0/](pack
 winget install QraftNodeKyoto.fds
 ```
 
-### 3.3 macOS Homebrew
+### 3.3 macOS / Linux Homebrew
 
-**Status**: ❌ Not registered
+**Status**: ✅ Available through the tap [tsucky230/homebrew-tap](https://github.com/tsucky230/homebrew-tap) (v0.8.0). Not in `homebrew/core`: a self-submission needs 90 forks, 90 watchers or 225 stars (https://docs.brew.sh/Package-Acceptance-Policy).
 
-**Registration Process**:
-1. Create Homebrew formula: `fds.rb`
-2. Submit to `homebrew/core` (or `homebrew/tap`)
-3. Formula template:
-```ruby
-class Fds < Formula
-  desc "Keyboard-First TUI File Manager"
-  homepage "https://tsucky230.github.io/fds/"
-  url "https://github.com/tsucky230/fds/archive/refs/tags/v0.8.0.tar.gz"
-  sha256 "abc123..."
-  license "GPL-3.0-only"
-
-  depends_on "rust" => :build
-
-  def install
-    system "cargo", "install", "--locked", "--root", prefix, "--path", "."
-  end
-end
-```
+The formula (`Formula/fds.rb` in the tap) builds the tagged source with `cargo install` (`std_cargo_args`, i.e. `--locked`). Each release only changes its `url` and `sha256`; the tap's CI runs audit, install from source and `fds --version` on macOS and Linux.
 
 **User will run**:
 ```bash
-brew install fds
+brew install tsucky230/tap/fds
 ```
 
 ### 3.4 Linux Distributions
@@ -345,7 +327,7 @@ git push origin v0.8.0
 
 **Phase 3 Complete** when:
 - [ ] `winget install QraftNodeKyoto.fds` works
-- [ ] `brew install fds` works
+- [x] `brew install tsucky230/tap/fds` works
 - [ ] `cargo install --git https://github.com/tsucky230/fds --locked` works
 
 ---

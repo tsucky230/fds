@@ -15,7 +15,13 @@ A fast, keyboard-driven file manager for terminal environments. Recreates the "r
 
 ### Installation
 
-Requires Rust (stable). At the repository root:
+Homebrew (macOS / Linux):
+
+```bash
+brew install tsucky230/tap/fds
+```
+
+From source, requires Rust (stable). At the repository root:
 
 ```bash
 cargo install --path .
