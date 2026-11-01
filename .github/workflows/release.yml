@@ -178,6 +178,12 @@ jobs:
         with:
           path: release-assets
       
+      # Copy SBOM to release assets
+      - name: Include SBOM in Release
+        run: |
+          cp sbom/fds.cdx.json release-assets/sbom-${{ needs.validate-release.outputs.version }}.json
+          echo "✅ SBOM added to release assets"
+      
       # Extract version and pre-release flag
       - name: Prepare Release Data
         id: release-data
@@ -238,6 +244,7 @@ jobs:
           files: |
             release-assets/**/fds-*
             release-assets/**/checksums.sha256
+            release-assets/**/sbom-*.json
           draft: false
           prerelease: ${{ needs.validate-release.outputs.is-prerelease }}
           token: ${{ secrets.GITHUB_TOKEN }}

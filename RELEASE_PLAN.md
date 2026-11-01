@@ -68,7 +68,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Extract Cargo.toml version
-        run: echo "version=$VERSION" >> $GITHUB_OUTPUT
+        id: version
+        run: |
+          VERSION=$(grep '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Validate CHANGELOG entries
         run: |
           grep -q "## \[$VERSION\]" CHANGELOG.md || exit 1
@@ -103,6 +106,7 @@ Tag pushed (e.g., v0.8.0)
          - Release notes from CHANGELOG
          - Binary attachments
          - Checksum file
+         - SBOM (sbom/fds.cdx.json)
         ↓
 [Step 5] Publish to crates.io (Rust)
         ↓
