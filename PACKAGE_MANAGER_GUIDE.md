@@ -16,18 +16,20 @@ This document provides step-by-step instructions for registering fds with Window
 
 After the GitHub Release is created, copy the previous version's manifests and update the version, URLs and SHA-256 values (from `fds-X.Y.Z-checksums.sha256`, uppercase).
 
-**Files** (multi-file format, schema 1.12.0): `packaging/winget/<version>/`
+**Files** (multi-file format, schema 1.28.0): `packaging/winget/<version>/`
 - `QraftNodeKyoto.fds.yaml` (`ManifestType: version`)
 - `QraftNodeKyoto.fds.locale.en-US.yaml` (`ManifestType: defaultLocale`)
 - `QraftNodeKyoto.fds.installer.yaml` (`ManifestType: installer`, `InstallerType: portable`, `Commands: [fds]`)
 
-See [packaging/winget/0.8.0/](packaging/winget/0.8.0/) for the current set.
+See [packaging/winget/0.8.1/](packaging/winget/0.8.1/) for the current set. The 0.8.0 set was submitted but never merged.
+
+The winget validation VM has no Visual C++ runtime, and its post-install check runs the exe. A Windows binary that imports `VCRUNTIME140.dll` fails there with 0xC0000135 and gets the `Validation-Executable-Error` label, as 0.8.0 did. Since 0.8.1 the C runtime is linked statically (`.cargo/config.toml`), and the release workflow runs `scripts/check-windows-deps.ps1` on both Windows binaries.
 
 Validate and test locally (enabling local manifests needs an administrator shell; disable it again afterwards):
 ```powershell
-winget validate --manifest packaging\winget\0.8.0
+winget validate --manifest packaging\winget\0.8.1
 winget settings --enable LocalManifestFiles      # admin
-winget install --manifest packaging\winget\0.8.0
+winget install --manifest packaging\winget\0.8.1
 winget uninstall QraftNodeKyoto.fds
 winget settings --disable LocalManifestFiles     # admin
 ```
@@ -36,7 +38,7 @@ winget settings --disable LocalManifestFiles     # admin
 
 1. Fork https://github.com/microsoft/winget-pkgs
 2. On a new branch, add the three files under `manifests/q/QraftNodeKyoto/fds/<version>/`
-3. Open a PR titled `New package: QraftNodeKyoto.fds version 0.8.0` (later versions: `Update: QraftNodeKyoto.fds to X.Y.Z`) and fill in the PR template checklist
+3. Open a PR titled `New package: QraftNodeKyoto.fds version X.Y.Z` for the first submission (later versions: `Update: QraftNodeKyoto.fds to X.Y.Z`) and fill in the PR template checklist
 4. Sign the Microsoft CLA when the bot asks (first PR only)
 
 ### Step 3: Wait for Approval
@@ -195,8 +197,8 @@ package() {
 
 ## ⚠️ Known Limitations
 
-### Current (v0.8.0)
-- Homebrew: tap only (`brew install tsucky230/tap/fds`), built from source; not in homebrew-core
+### Current (v0.8.1)
+- Homebrew: tap only (`brew install tsucky230/tap/fds`), built from source; not in homebrew-core. The tap formula is still at v0.8.0; 0.8.1 changes only the Windows binaries
 - winget: submitted ([microsoft/winget-pkgs#468247](https://github.com/microsoft/winget-pkgs/pull/468247)), waiting for review
 - Not on crates.io (the name `fds` belongs to an unrelated project); use `cargo install --git https://github.com/tsucky230/fds --locked` or the GitHub Release binaries
 
