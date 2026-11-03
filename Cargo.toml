@@ -1,6 +1,6 @@
 [package]
 name = "fds"
-version = "0.8.0"
+version = "0.8.1"
 edition = "2024"
 authors = ["Qraft Node Kyoto"]
 license = "GPL-3.0-only"
@@ -50,35 +50,35 @@ trash = "5.2"
 [[package.metadata.cyclonedx.components]]
 type = "library"
 name = "fds-ops"
-version = "0.8.0"
+version = "0.8.1"
 description = "File system operations: check, simple tasks, trash, worker pool, and name resolution"
 
 [[package.metadata.cyclonedx.components]]
 type = "library"
 name = "fds-viewer"
-version = "0.8.0"
+version = "0.8.1"
 description = "File content viewers: text, hex, image, markdown with encoding detection and rendering"
 
 [[package.metadata.cyclonedx.components]]
 type = "library"
 name = "fds-ui"
-version = "0.8.0"
+version = "0.8.1"
 description = "Terminal UI: panes, widgets, archive view, preview, info display, and input handling"
 
 [[package.metadata.cyclonedx.components]]
 type = "library"
 name = "fds-cli"
-version = "0.8.0"
+version = "0.8.1"
 description = "Command-line interface: shell command execution, editor integration, and terminal control"
 
 [[package.metadata.cyclonedx.components]]
 type = "library"
 name = "fds-archive"
-version = "0.8.0"
+version = "0.8.1"
 description = "Archive handling: pack/unpack tar and zip formats with compression support"
 
 [[package.metadata.cyclonedx.components]]
 type = "library"
 name = "fds-i18n"
-version = "0.8.0"
+version = "0.8.1"
 description = "Internationalization: multi-language support with user overrides"

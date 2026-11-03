@@ -7,6 +7,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-03
+
+This release makes the Windows binaries run on a clean Windows.
+
+### Fixed
+- The Windows binaries (x86_64 and ARM64) no longer need the Visual C++ Redistributable. They imported `VCRUNTIME140.dll`, so on a machine without it they failed to start with error 0xC0000135, even for `fds --version`. The C runtime is now linked statically (`.cargo/config.toml`)
+
+### Changed
+- The release workflow checks that the Windows binaries do not import the C runtime DLLs (`scripts/check-windows-deps.ps1`)
+
 ## [0.8.0] - 2026-11-01
 
 This release introduces automated release workflows with multi-platform binary support and version validation.

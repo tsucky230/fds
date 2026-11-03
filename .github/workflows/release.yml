@@ -107,6 +107,27 @@ jobs:
       - name: Build Release Binary
         run: cargo build --release --locked --target ${{ matrix.target }}
 
+      # A clean Windows (such as the winget validation VM) has no Visual C++ runtime, so the exe
+      # must not import it (.cargo/config.toml links it statically). The runner has the runtime
+      # installed, so --version here only shows that the x64 exe starts and reports the version.
+      - name: Check Windows Runtime Dependencies
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.validate-release.outputs.version }}
+          EXE: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          ./scripts/check-windows-deps.ps1 $env:EXE
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($env:TARGET -like 'x86_64-*') {
+            $out = (& $env:EXE --version) -join "`n"
+            if ($LASTEXITCODE -ne 0 -or $out -ne "fds $env:VERSION") {
+              Write-Host "::error::$env:EXE --version printed '$out' (exit $LASTEXITCODE), expected 'fds $env:VERSION'"
+              exit 1
+            }
+          }
+
       - name: Stage Binary
         shell: bash
         env:
