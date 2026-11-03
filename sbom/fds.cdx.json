@@ -17,17 +17,17 @@
     ],
     "component": {
       "type": "application",
-      "bom-ref": "path+file:///home/runner/work/fds/fds#0.8.0",
+      "bom-ref": "path+file:///home/runner/work/fds/fds#0.8.1",
       "author": "Qraft Node Kyoto",
       "name": "fds",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "scope": "required",
       "licenses": [
         {
           "expression": "GPL-3.0-only"
         }
       ],
-      "purl": "pkg:cargo/fds@0.8.0?download_url=file://.",
+      "purl": "pkg:cargo/fds@0.8.1?download_url=file://.",
       "externalReferences": [
         {
           "type": "website",
@@ -41,23 +41,23 @@
       "components": [
         {
           "type": "library",
-          "bom-ref": "path+file:///home/runner/work/fds/fds#0.8.0 bin-target-0",
+          "bom-ref": "path+file:///home/runner/work/fds/fds#0.8.1 bin-target-0",
           "name": "fds",
-          "version": "0.8.0",
-          "purl": "pkg:cargo/fds@0.8.0?download_url=file://.#src/lib.rs"
+          "version": "0.8.1",
+          "purl": "pkg:cargo/fds@0.8.1?download_url=file://.#src/lib.rs"
         },
         {
           "type": "application",
-          "bom-ref": "path+file:///home/runner/work/fds/fds#0.8.0 bin-target-1",
+          "bom-ref": "path+file:///home/runner/work/fds/fds#0.8.1 bin-target-1",
           "name": "fds",
-          "version": "0.8.0",
-          "purl": "pkg:cargo/fds@0.8.0?download_url=file://.#src/main.rs"
+          "version": "0.8.1",
+          "purl": "pkg:cargo/fds@0.8.1?download_url=file://.#src/main.rs"
         },
         {
           "type": "library",
-          "bom-ref": "fds-ops-0.8.0",
+          "bom-ref": "fds-ops-0.8.1",
           "name": "fds-ops",
-          "version": "0.8.0",
+          "version": "0.8.1",
           "author": "Qraft Node Kyoto",
           "description": "File system operations: check, simple tasks, trash, worker pool, and name resolution",
           "licenses": [
@@ -65,8 +65,8 @@
               "expression": "GPL-3.0-only"
             }
           ],
-          "purl": "pkg:cargo/fds-ops@0.8.0",
-          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-ops:0.8.0:*:*:*:*:*:*:*",
+          "purl": "pkg:cargo/fds-ops@0.8.1",
+          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-ops:0.8.1:*:*:*:*:*:*:*",
           "hashes": [
             {
               "alg": "SHA-256",
@@ -82,9 +82,9 @@
         },
         {
           "type": "library",
-          "bom-ref": "fds-viewer-0.8.0",
+          "bom-ref": "fds-viewer-0.8.1",
           "name": "fds-viewer",
-          "version": "0.8.0",
+          "version": "0.8.1",
           "author": "Qraft Node Kyoto",
           "description": "File content viewers: text, hex, image, markdown with encoding detection and rendering",
           "licenses": [
@@ -92,8 +92,8 @@
               "expression": "GPL-3.0-only"
             }
           ],
-          "purl": "pkg:cargo/fds-viewer@0.8.0",
-          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-viewer:0.8.0:*:*:*:*:*:*:*",
+          "purl": "pkg:cargo/fds-viewer@0.8.1",
+          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-viewer:0.8.1:*:*:*:*:*:*:*",
           "hashes": [
             {
               "alg": "SHA-256",
@@ -109,9 +109,9 @@
         },
         {
           "type": "library",
-          "bom-ref": "fds-ui-0.8.0",
+          "bom-ref": "fds-ui-0.8.1",
           "name": "fds-ui",
-          "version": "0.8.0",
+          "version": "0.8.1",
           "author": "Qraft Node Kyoto",
           "description": "Terminal UI: panes, widgets, archive view, preview, info display, and input handling",
           "licenses": [
@@ -119,8 +119,8 @@
               "expression": "GPL-3.0-only"
             }
           ],
-          "purl": "pkg:cargo/fds-ui@0.8.0",
-          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-ui:0.8.0:*:*:*:*:*:*:*",
+          "purl": "pkg:cargo/fds-ui@0.8.1",
+          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-ui:0.8.1:*:*:*:*:*:*:*",
           "hashes": [
             {
               "alg": "SHA-256",
@@ -136,9 +136,9 @@
         },
         {
           "type": "library",
-          "bom-ref": "fds-cli-0.8.0",
+          "bom-ref": "fds-cli-0.8.1",
           "name": "fds-cli",
-          "version": "0.8.0",
+          "version": "0.8.1",
           "author": "Qraft Node Kyoto",
           "description": "Command-line interface: shell command execution, editor integration, and terminal control",
           "licenses": [
@@ -146,8 +146,8 @@
               "expression": "GPL-3.0-only"
             }
           ],
-          "purl": "pkg:cargo/fds-cli@0.8.0",
-          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-cli:0.8.0:*:*:*:*:*:*:*",
+          "purl": "pkg:cargo/fds-cli@0.8.1",
+          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-cli:0.8.1:*:*:*:*:*:*:*",
           "hashes": [
             {
               "alg": "SHA-256",
@@ -163,9 +163,9 @@
         },
         {
           "type": "library",
-          "bom-ref": "fds-archive-0.8.0",
+          "bom-ref": "fds-archive-0.8.1",
           "name": "fds-archive",
-          "version": "0.8.0",
+          "version": "0.8.1",
           "author": "Qraft Node Kyoto",
           "description": "Archive handling: pack/unpack tar and zip formats with compression support",
           "licenses": [
@@ -173,8 +173,8 @@
               "expression": "GPL-3.0-only"
             }
           ],
-          "purl": "pkg:cargo/fds-archive@0.8.0",
-          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-archive:0.8.0:*:*:*:*:*:*:*",
+          "purl": "pkg:cargo/fds-archive@0.8.1",
+          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-archive:0.8.1:*:*:*:*:*:*:*",
           "hashes": [
             {
               "alg": "SHA-256",
@@ -190,9 +190,9 @@
         },
         {
           "type": "library",
-          "bom-ref": "fds-i18n-0.8.0",
+          "bom-ref": "fds-i18n-0.8.1",
           "name": "fds-i18n",
-          "version": "0.8.0",
+          "version": "0.8.1",
           "author": "Qraft Node Kyoto",
           "description": "Internationalization: multi-language support with user overrides",
           "licenses": [
@@ -200,8 +200,8 @@
               "expression": "GPL-3.0-only"
             }
           ],
-          "purl": "pkg:cargo/fds-i18n@0.8.0",
-          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-i18n:0.8.0:*:*:*:*:*:*:*",
+          "purl": "pkg:cargo/fds-i18n@0.8.1",
+          "cpe": "cpe:2.3:a:qraft_node_kyoto:fds-i18n:0.8.1:*:*:*:*:*:*:*",
           "hashes": [
             {
               "alg": "SHA-256",
@@ -9800,7 +9800,7 @@
   ],
   "dependencies": [
     {
-      "ref": "path+file:///home/runner/work/fds/fds#0.8.0",
+      "ref": "path+file:///home/runner/work/fds/fds#0.8.1",
       "dependsOn": [
         "registry+https://github.com/rust-lang/crates.io-index#base64@0.23.1",
         "registry+https://github.com/rust-lang/crates.io-index#chardetng@1.0.0",
